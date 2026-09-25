@@ -52,6 +52,37 @@ class MarkdownManagerTest {
     }
 
     @Test
+    void parsesChangelogOrderedListsAsSeparateItems() {
+        String markdown = "## 修复\n\n"
+                + "1. 修复矿区宝藏无法触发的问题：保留原始挖掘方块并按方块 ID 匹配。\n"
+                + "2. 矿区添加或移除宝藏后立即保存，并阻止重复绑定同一宝藏。\n"
+                + "3. 适配CraftEngine API更新\n\n"
+                + "## 新增\n"
+                + "1. 主页面右上角有关闭按钮了\n"
+                + "2. 复生点\n\n"
+                + "## 更改\n"
+                + "1. 实现Identified的Mine、Rank、RegenPoint、Treasure的displayName再次变为非null";
+
+        JsonNode doc = manager.parse(markdown);
+
+        assertEquals("heading", doc.path("content").get(0).path("type").asText());
+        assertEquals("orderedList", doc.path("content").get(1).path("type").asText());
+        assertEquals(3, doc.path("content").get(1).path("content").size());
+        assertEquals("orderedList", doc.path("content").get(3).path("type").asText());
+        assertEquals(2, doc.path("content").get(3).path("content").size());
+        String normalized = "## 修复\n\n"
+                + "1. 修复矿区宝藏无法触发的问题：保留原始挖掘方块并按方块 ID 匹配。\n"
+                + "2. 矿区添加或移除宝藏后立即保存，并阻止重复绑定同一宝藏。\n"
+                + "3. 适配CraftEngine API更新\n\n"
+                + "## 新增\n\n"
+                + "1. 主页面右上角有关闭按钮了\n"
+                + "2. 复生点\n\n"
+                + "## 更改\n\n"
+                + "1. 实现Identified的Mine、Rank、RegenPoint、Treasure的displayName再次变为非null";
+        assertEquals(normalized, manager.serialize(doc));
+    }
+
+    @Test
     void serializesTiptapJson() throws Exception {
         JsonNode doc = mapper.readTree("{\"type\":\"doc\",\"content\":["
                 + "{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Hello\"}]},"
